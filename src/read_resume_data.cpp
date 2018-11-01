@@ -86,7 +86,8 @@ namespace {
 		}
 
 		auto info_hash = rd.dict_find_string_value("info-hash");
-		if (info_hash.size() != sha1_hash::size())
+		if (sha1_hash::difference_type(info_hash.size())
+			!= sha1_hash::size())
 		{
 			ec = errors::missing_info_hash;
 			return ret;

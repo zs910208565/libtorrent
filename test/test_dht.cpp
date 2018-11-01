@@ -95,9 +95,8 @@ void add_and_replace(node_id& dst, node_id const& add)
 	bool carry = false;
 	for (int k = 19; k >= 0; --k)
 	{
-		std::size_t idx = std::size_t(k);
-		int sum = dst[idx] + add[idx] + (carry ? 1 : 0);
-		dst[idx] = sum & 255;
+		int sum = dst[k] + add[k] + (carry ? 1 : 0);
+		dst[k] = sum & 255;
 		carry = sum > 255;
 	}
 }
@@ -261,7 +260,7 @@ struct msg_args
 	msg_args& samples(std::vector<sha1_hash> const& samples)
 	{
 		a["samples"] = span<char const>(
-			reinterpret_cast<char const*>(samples.data()), samples.size() * 20);
+			reinterpret_cast<char const*>(samples.data()), int(samples.size()) * 20);
 		return *this;
 	}
 
@@ -1367,7 +1366,7 @@ void test_put(address(&rand_addr)())
 			TEST_ERROR(t.error_string);
 		}
 
-		itemv = span<char const>(buffer, std::size_t(bencode(buffer, items[0].ent)));
+		itemv = span<char const>(buffer, bencode(buffer, items[0].ent));
 		sig = sign_mutable_item(itemv, salt, seq, pk, sk);
 		TEST_EQUAL(verify_mutable_item(itemv, salt, seq, pk, sig), true);
 
@@ -1436,7 +1435,7 @@ void test_put(address(&rand_addr)())
 
 		// also test that invalid signatures fail!
 
-		itemv = span<char const>(buffer, std::size_t(bencode(buffer, items[0].ent)));
+		itemv = span<char const>(buffer, bencode(buffer, items[0].ent));
 		sig = sign_mutable_item(itemv, salt, seq, pk, sk);
 		TEST_EQUAL(verify_mutable_item(itemv, salt, seq, pk, sig), 1);
 		// break the signature
@@ -1500,7 +1499,7 @@ void test_put(address(&rand_addr)())
 		// increment sequence number
 		seq = next_seq(seq);
 		// put item 1
-		itemv = span<char const>(buffer, std::size_t(bencode(buffer, items[1].ent)));
+		itemv = span<char const>(buffer, bencode(buffer, items[1].ent));
 		sig = sign_mutable_item(itemv, salt, seq, pk, sk);
 		TEST_EQUAL(verify_mutable_item(itemv, salt, seq, pk, sig), 1);
 
@@ -2261,7 +2260,7 @@ void test_mutable_get(address(&rand_addr)(), bool const with_salt)
 	g_sent_packets.clear();
 
 	signature sig;
-	itemv = span<char const>(buffer, std::size_t(bencode(buffer, items[0].ent)));
+	itemv = span<char const>(buffer, bencode(buffer, items[0].ent));
 	sig = sign_mutable_item(itemv, salt, seq, pk, sk);
 	send_dht_response(t.dht_node, response, initial_node
 		, msg_args()
@@ -2426,7 +2425,7 @@ TORRENT_TEST(immutable_put)
 		TEST_EQUAL(g_sent_packets.size(), 8);
 		if (g_sent_packets.size() != 8) break;
 
-		itemv = span<char const>(buffer, std::size_t(bencode(buffer, put_data)));
+		itemv = span<char const>(buffer, bencode(buffer, put_data));
 
 		for (int i = 0; i < 8; ++i)
 		{
@@ -2527,7 +2526,7 @@ TORRENT_TEST(mutable_put)
 		TEST_EQUAL(g_sent_packets.size(), 8);
 		if (g_sent_packets.size() != 8) break;
 
-		itemv = span<char const>(buffer, std::size_t(bencode(buffer, items[0].ent)));
+		itemv = span<char const>(buffer, bencode(buffer, items[0].ent));
 
 		for (int i = 0; i < 8; ++i)
 		{
@@ -2595,12 +2594,12 @@ TORRENT_TEST(traversal_done)
 
 	// invert the ith most significant byte so that the test nodes are
 	// progressively closer to the target item
-	for (std::size_t i = 0; i < num_test_nodes; ++i)
-		nodes[i].id[i] = ~nodes[i].id[i];
+	for (int i = 0; i < num_test_nodes; ++i)
+		nodes[static_cast<std::size_t>(i)].id[i] = ~nodes[static_cast<std::size_t>(i)].id[i];
 
 	// add the first k nodes to the subject's routing table
-	for (std::size_t i = 0; i < 8; ++i)
-		t.dht_node.m_table.add_node(nodes[i]);
+	for (int i = 0; i < 8; ++i)
+		t.dht_node.m_table.add_node(nodes[std::size_t(i)]);
 
 	// kick off a mutable put request
 	g_put_item.assign(items[0].ent, empty_salt, seq, pk, sk);
