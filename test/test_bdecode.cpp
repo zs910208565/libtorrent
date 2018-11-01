@@ -500,7 +500,7 @@ TORRENT_TEST(item_limit)
 {
 	char b[10240];
 	b[0] = 'l';
-	std::size_t i = 1;
+	span<char>::difference_type i = 1;
 	for (i = 1; i < 10239; i += 2)
 		memcpy(&b[i], "0:", 2);
 	b[i] = 'e';
@@ -793,7 +793,7 @@ TORRENT_TEST(parse_length_overflow)
 	for (int i = 0; i < int(sizeof(b)/sizeof(b[0])); ++i)
 	{
 		error_code ec;
-		bdecode_node e = bdecode({b[i], strlen(b[i])}, ec);
+		bdecode_node e = bdecode({b[i], static_cast<std::ptrdiff_t>(strlen(b[i]))}, ec);
 		TEST_EQUAL(ec, error_code(bdecode_errors::unexpected_eof));
 	}
 }
